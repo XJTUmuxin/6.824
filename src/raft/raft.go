@@ -57,7 +57,7 @@ type ApplyMsg struct {
 }
 
 const (
-	heartBeatTimeOut     = time.Millisecond * 50
+	heartBeatTimeOut     = time.Millisecond * 100
 	electionBaseTimeOut  = 250
 	electionTimeOutRange = 150
 )
@@ -619,7 +619,7 @@ func (rf *Raft) sendHeartBeat() {
 func (rf *Raft) apply(applyCh chan ApplyMsg) {
 	for rf.killed() == false {
 		rf.mu.Lock()
-		if rf.commitIndex > rf.lastApplied && len(rf.logs)-1 > rf.lastApplied {
+		for rf.commitIndex > rf.lastApplied && len(rf.logs)-1 > rf.lastApplied {
 			newApplyMsg := ApplyMsg{CommandValid: true, Command: rf.logs[rf.lastApplied+1].Command, CommandIndex: rf.lastApplied + 1}
 			applyCh <- newApplyMsg
 			rf.lastApplied++
