@@ -1,16 +1,19 @@
 package kvraft
 
-import "6.824/porcupine"
-import "6.824/models"
-import "testing"
-import "strconv"
-import "time"
-import "math/rand"
-import "strings"
-import "sync"
-import "sync/atomic"
-import "fmt"
-import "io/ioutil"
+import (
+	"fmt"
+	"io/ioutil"
+	"math/rand"
+	"strconv"
+	"strings"
+	"sync"
+	"sync/atomic"
+	"testing"
+	"time"
+
+	"6.824/models"
+	"6.824/porcupine"
+)
 
 // The tester generously allows solutions to complete elections in one second
 // (much more than the paper's range of timeouts).
@@ -536,13 +539,13 @@ func TestOnePartition3A(t *testing.T) {
 	select {
 	case <-done0:
 	case <-time.After(30 * 100 * time.Millisecond):
-		t.Fatalf("Put did not complete")
+		t.Fatalf("Put did not complete at time %v", time.Now())
 	}
 
 	select {
 	case <-done1:
 	case <-time.After(30 * 100 * time.Millisecond):
-		t.Fatalf("Get did not complete")
+		t.Fatalf("Get did not complete at time %v", time.Now())
 	default:
 	}
 
