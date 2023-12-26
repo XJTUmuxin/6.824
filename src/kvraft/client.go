@@ -60,21 +60,21 @@ func (ck *Clerk) Get(key string) string {
 		DPrintf("client %v call get to server %d with args %v\n", ck.clientId, i, args)
 		ok := ck.servers[i].Call("KVServer.Get", &args, &reply)
 		if !ok {
-			DPrintf("client %v call get to server %d with args %v failed\n", ck.clientId, i, args)
+			DPrintf("client %v call get to server with args %v failed\n", ck.clientId, args)
 			continue
 		} else {
 			if reply.Err == OK {
 				ck.lastLeaderId = i
-				DPrintf("leader %d success reply to client %v with args %v with reply %v\n", i, ck.clientId, args, reply)
+				DPrintf("leader success reply to client %v with args %v with reply %v\n", ck.clientId, args, reply)
 				return reply.Value
 			} else if reply.Err == ErrNoKey {
 				ck.lastLeaderId = i
 				break
 			} else if reply.Err == ErrWrongLeader || reply.Err == ErrTimeOut {
 				if reply.Err == ErrTimeOut {
-					DPrintf("client %v call get to server %d with args %v timeout\n", ck.clientId, i, args)
+					DPrintf("client %v call get to server with args %v timeout\n", ck.clientId, args)
 				} else if reply.Err == ErrWrongLeader {
-					DPrintf("client %v call get to server %d with args %v wrong leader\n", ck.clientId, i, args)
+					DPrintf("client %v call get to server with args %v wrong leader\n", ck.clientId, args)
 				}
 				continue
 			}
@@ -103,21 +103,21 @@ func (ck *Clerk) PutAppend(key string, value string, op string) {
 		// 	time.Sleep(50 * time.Millisecond)
 		// }
 		reply := PutAppendReply{}
-		DPrintf("client %v call put or append to server %d with args %v\n", ck.clientId, i, args)
+		DPrintf("client %v call put or append to server with args %v\n", ck.clientId, args)
 		ok := ck.servers[i].Call("KVServer.PutAppend", &args, &reply)
 		if !ok {
-			DPrintf("client %v call put or append to server %d with args %v failed\n", ck.clientId, i, args)
+			DPrintf("client %v call put or append to server with args %v failed\n", ck.clientId, args)
 			continue
 		} else {
 			if reply.Err == OK || reply.Err == ErrNoKey {
 				ck.lastLeaderId = i
-				DPrintf("leader %d success reply to client %v with args %v with reply %v\n", i, ck.clientId, args, reply)
+				DPrintf("leader success reply to client %v with args %v with reply %v\n", ck.clientId, args, reply)
 				break
 			} else if reply.Err == ErrWrongLeader || reply.Err == ErrTimeOut {
 				if reply.Err == ErrTimeOut {
-					DPrintf("client %v call put or append to server %d with args %v timeout\n", ck.clientId, i, args)
+					DPrintf("client %v call put or append to server with args %v timeout\n", ck.clientId, args)
 				} else if reply.Err == ErrWrongLeader {
-					DPrintf("client %v call put or append to server %d with args %v wrong leader\n", ck.clientId, i, args)
+					DPrintf("client %v call put or append to server with args %v wrong leader\n", ck.clientId, args)
 				}
 				continue
 			}

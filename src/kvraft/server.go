@@ -159,6 +159,7 @@ func (kv *KVServer) applier() {
 			}
 			kv.lastCmdIds[op.ClientId] = op.CmdId
 			DPrintf("kv server %d apply op %v\n", kv.me, op)
+			DPrintf("kv server %d state: key %v, value %v\n", kv.me, op.Key, kv.kvMap[op.Key])
 			index := newApplyMsg.CommandIndex
 			if ch, ok := kv.notifyChs[index]; ok {
 				ch <- CmdIdentify{ClientId: op.ClientId, CmdId: op.CmdId}
@@ -204,7 +205,7 @@ func (kv *KVServer) applySnapshot(snapshot []byte, index int) {
 	} else {
 		kv.kvMap = kvMap
 		kv.lastCmdIds = lastCmdId
-		DPrintf("kv server %d apply the snapshot at index %d\n", kv.me, index)
+		DPrintf("kv server %d apply the snapshot at index %d recorver kvmap %v\n", kv.me, index, kv.kvMap)
 	}
 }
 

@@ -543,8 +543,8 @@ func (rf *Raft) InstallSnapshot(args *InstallSnapshotArgs, reply *InstallSnapsho
 		}
 		reply.Term = rf.currentTerm
 		if rf.state == follower {
-			if rf.lastIncludedIndex > args.LastIncludeIndex {
-				DPrintf("raft server %d return Install Snapshot because of bigger lastIncludedIndex\n", rf.me)
+			if rf.lastIncludedIndex >= args.LastIncludeIndex {
+				DPrintf("raft server %d return Install Snapshot because of bigger or same lastIncludedIndex rf: %d, args: %d \n", rf.me, rf.lastIncludedIndex, args.LastIncludeIndex)
 				reply.LastIncludeIndex = rf.lastIncludedIndex
 				return
 			}
@@ -558,7 +558,7 @@ func (rf *Raft) InstallSnapshot(args *InstallSnapshotArgs, reply *InstallSnapsho
 				rf.logs = make([]LogEntry, 0)
 				rf.lastIncludedIndex = args.LastIncludeIndex
 				rf.lastIncludedTerm = args.LastIncludeTerm
-				rf.logsStartIndex = rf.lastIncludedIndex + 1
+				rf.logsStartIndex = args.LastIncludeIndex + 1
 				// rf.snapShot = args.Data
 				rf.lastApplied = args.LastIncludeIndex
 				rf.commitIndex = args.LastIncludeIndex
@@ -607,12 +607,12 @@ func (rf *Raft) paralCallInstallSnapshot(server int, args *InstallSnapshotArgs) 
 		if args.Term != reply.Term {
 			return
 		} else {
-			if reply.LastIncludeIndex > rf.lastIncludedIndex {
+			if reply.LastIncludeIndex >= args.LastIncludeIndex {
 				rf.nextIndex[server] = reply.LastIncludeIndex + 1
 				rf.matchIndex[server] = reply.LastIncludeIndex
 			} else {
-				rf.nextIndex[server] = rf.logsStartIndex
-				rf.matchIndex[server] = rf.lastIncludedIndex
+				rf.nextIndex[server] = args.LastIncludeIndex + 1
+				rf.matchIndex[server] = args.LastIncludeIndex
 			}
 		}
 	}
@@ -762,7 +762,7 @@ func (rf *Raft) sendHeartBeat() {
 func (rf *Raft) apply(applyCh chan ApplyMsg) {
 	for rf.killed() == false {
 		rf.mu.Lock()
-		for rf.commitIndex > rf.lastApplied && len(rf.logs)-1+rf.logsStartIndex > rf.lastApplied {
+		for rf.commitIndex > rf.lastApplied && len(rf.logs)-1+rf.logsStartIndex > rf.lastApplied && rf.lastApplied+1-rf.logsStartIndex >= 0 {
 			newApplyMsg := ApplyMsg{CommandValid: true, Command: rf.logs[rf.lastApplied+1-rf.logsStartIndex].Command, CommandIndex: rf.lastApplied + 1}
 			rf.lastApplied++
 			rf.mu.Unlock()
