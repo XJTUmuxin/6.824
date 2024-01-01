@@ -347,36 +347,36 @@ func (rf *Raft) paralCallAppendEntries(server int, args AppendEntriesArgs) {
 				}
 				rf.nextIndex[server] = rf.nextIndex[server] / 2
 				// rf.nextIndex[server] = rf.nextIndex[server] - 1
-				// if rf.nextIndex[server] > rf.logsStartIndex {
-				// 	newArgs := AppendEntriesArgs{
-				// 		Term:         rf.currentTerm,
-				// 		LeaderId:     rf.me,
-				// 		PrevLogIndex: rf.nextIndex[server] - 1,
-				// 		PrevLogTerm:  rf.logs[rf.nextIndex[server]-1-rf.logsStartIndex].Term,
-				// 		Entries:      append([]LogEntry(nil), rf.logs[rf.nextIndex[server]-rf.logsStartIndex:]...),
-				// 		LeaderCommit: rf.commitIndex}
-				// 	go rf.paralCallAppendEntries(server, newArgs)
-				// } else if rf.nextIndex[server] == rf.logsStartIndex {
-				// 	newArgs := AppendEntriesArgs{
-				// 		Term:         rf.currentTerm,
-				// 		LeaderId:     rf.me,
-				// 		PrevLogIndex: rf.nextIndex[server] - 1,
-				// 		PrevLogTerm:  rf.lastIncludedTerm,
-				// 		Entries:      append([]LogEntry(nil), rf.logs[rf.nextIndex[server]-rf.logsStartIndex:]...),
-				// 		LeaderCommit: rf.commitIndex}
-				// 	go rf.paralCallAppendEntries(server, newArgs)
-				// } else {
-				// 	args := InstallSnapshotArgs{
-				// 		Term:             rf.currentTerm,
-				// 		LeaderId:         rf.me,
-				// 		LastIncludeIndex: rf.lastIncludedIndex,
-				// 		LastIncludeTerm:  rf.lastIncludedTerm,
-				// 		Data:             rf.persister.ReadSnapshot(),
-				// 	}
-				// 	DPrintf("raft leader %d call installSnapshot to server %d because of appendentries backup\n", rf.me, server)
-				// 	go rf.paralCallInstallSnapshot(server, &args)
-				// 	return
-				// }
+				if rf.nextIndex[server] > rf.logsStartIndex {
+					newArgs := AppendEntriesArgs{
+						Term:         rf.currentTerm,
+						LeaderId:     rf.me,
+						PrevLogIndex: rf.nextIndex[server] - 1,
+						PrevLogTerm:  rf.logs[rf.nextIndex[server]-1-rf.logsStartIndex].Term,
+						Entries:      append([]LogEntry(nil), rf.logs[rf.nextIndex[server]-rf.logsStartIndex:]...),
+						LeaderCommit: rf.commitIndex}
+					go rf.paralCallAppendEntries(server, newArgs)
+				} else if rf.nextIndex[server] == rf.logsStartIndex {
+					newArgs := AppendEntriesArgs{
+						Term:         rf.currentTerm,
+						LeaderId:     rf.me,
+						PrevLogIndex: rf.nextIndex[server] - 1,
+						PrevLogTerm:  rf.lastIncludedTerm,
+						Entries:      append([]LogEntry(nil), rf.logs[rf.nextIndex[server]-rf.logsStartIndex:]...),
+						LeaderCommit: rf.commitIndex}
+					go rf.paralCallAppendEntries(server, newArgs)
+				} else {
+					args := InstallSnapshotArgs{
+						Term:             rf.currentTerm,
+						LeaderId:         rf.me,
+						LastIncludeIndex: rf.lastIncludedIndex,
+						LastIncludeTerm:  rf.lastIncludedTerm,
+						Data:             rf.persister.ReadSnapshot(),
+					}
+					DPrintf("raft leader %d call installSnapshot to server %d because of appendentries backup\n", rf.me, server)
+					go rf.paralCallInstallSnapshot(server, &args)
+					return
+				}
 			}
 		}
 	}
@@ -559,7 +559,6 @@ func (rf *Raft) InstallSnapshot(args *InstallSnapshotArgs, reply *InstallSnapsho
 				rf.lastIncludedIndex = args.LastIncludeIndex
 				rf.lastIncludedTerm = args.LastIncludeTerm
 				rf.logsStartIndex = args.LastIncludeIndex + 1
-				// rf.snapShot = args.Data
 				rf.lastApplied = args.LastIncludeIndex
 				rf.commitIndex = args.LastIncludeIndex
 				w := new(bytes.Buffer)
@@ -676,6 +675,11 @@ func (rf *Raft) killed() bool {
 // The ticker go routine starts a new election if this peer hasn't received
 // heartsbeats recently.
 func (rf *Raft) ticker() {
+	// make the ticker goroutines of every raft server start at a random time
+	rand.Seed(time.Now().UnixNano())
+	randomNumber := rand.Intn(100)
+	time.Sleep(time.Duration(randomNumber) * time.Millisecond)
+
 	for rf.killed() == false {
 
 		// Your code here to check if a leader election should
