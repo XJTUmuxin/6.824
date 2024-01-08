@@ -1,15 +1,18 @@
 package shardkv
 
-import "6.824/porcupine"
-import "6.824/models"
-import "testing"
-import "strconv"
-import "time"
-import "fmt"
-import "sync/atomic"
-import "sync"
-import "math/rand"
-import "io/ioutil"
+import (
+	"fmt"
+	"io/ioutil"
+	"math/rand"
+	"strconv"
+	"sync"
+	"sync/atomic"
+	"testing"
+	"time"
+
+	"6.824/models"
+	"6.824/porcupine"
+)
 
 const linearizabilityCheckTimeout = 1 * time.Second
 
@@ -829,6 +832,7 @@ func TestChallenge2Unaffected(t *testing.T) {
 
 	ck := cfg.makeClient()
 
+	DPrintf("join 100")
 	// JOIN 100
 	cfg.join(0)
 
@@ -842,8 +846,10 @@ func TestChallenge2Unaffected(t *testing.T) {
 		ck.Put(ka[i], va[i])
 	}
 
+	DPrintf("start join 101 at time %v", time.Now())
 	// JOIN 101
 	cfg.join(1)
+	DPrintf("end join 101 at time %v", time.Now())
 
 	// QUERY to find shards now owned by 101
 	c := cfg.mck.Query(-1)
@@ -863,9 +869,11 @@ func TestChallenge2Unaffected(t *testing.T) {
 		}
 	}
 
+	DPrintf("kill 100 at time %v", time.Now())
 	// KILL 100
 	cfg.ShutdownGroup(0)
 
+	DPrintf("leave 100")
 	// LEAVE 100
 	// 101 doesn't get a chance to migrate things previously owned by 100
 	cfg.leave(0)

@@ -1,0 +1,51 @@
+100 -> config 1(success)
+101 -> config 1(success)
+102 -> config 3(success)
+
+config 2  [101 101 101 101 101 100 100 100 100 100]
+
+            ^   ^   ^   ^   ^
+            |   |   |   |   |
+
+config 1  [100 100 100 100 100 100 100 100 100 100]
+
+gid 100 success push shard 0 to gid 101 in config 2 (no)
+gid 100 success push shard 1 to gid 101 in config 2 (no)
+gid 100 success push shard 2 to gid 101 in config 2 (no)
+...
+gid 100 begin push all shards at config 2 (no)
+gid 100 apply update op success with config &{2 (no)
+gid 100 get a new config {2 (no)
+
+gid 100 success update with new configNum 1 and new shards [100 100 100 100 100 100 100 100 100 100] (yes)
+
+gid 100 start the 
+
+kv server 1 of gid 100 apply update op success with config &{15 (yes) 8851
+
+kv server 1 of gid 100 success update with new configNum 7 and new shards [102 102 102 101 101 101 100 100 100 100] (yes) 9226
+
+gid 100 begin push all shards at config 7 (no)
+
+gid 100 start the done op at config 7 (yes) 9078
+
+success push shard 0 to gid 101 in config 11 
+gid 102 push shard 0 to gid 101 in config 11 ErrWrongConfigNum
+
+
+
+gid 100 begin push shard 5 to gid 101 in config 7 (no)
+
+
+
+kv server 1 of gid 100 apply update op success with config &{3 [102 102 102 101 101 101 100 100 100 100] (yes) 5150
+
+kv server 1 of gid 100 success update with new configNum 3 and new shards [102 102 102 101 101 101 100 100 100 100] (yes) 5291
+
+gid 100 success push all shards in config 3
+
+2024/01/08 15:36:04 end join 101 at time 2024-01-08 15:36:04.494730549 +0800 CST m=+2.616680877 876
+
+1.2 S
+
+2024/01/08 15:36:05 kill 100 at time 2024-01-08 15:36:05.71899117 +0800 CST m=+3.840941495

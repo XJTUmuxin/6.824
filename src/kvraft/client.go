@@ -53,9 +53,6 @@ func (ck *Clerk) Get(key string) string {
 	ck.nextCmdId++
 	args := GetArgs{Key: key, CmdId: cmdId, ClientId: ck.clientId}
 	for i := ck.lastLeaderId; ; i = (i + 1) % len(ck.servers) {
-		// if i == len(ck.servers)-1 {
-		// 	time.Sleep(50 * time.Millisecond)
-		// }
 		reply := GetReply{}
 		DPrintf("client %v call get to server %d with args %v\n", ck.clientId, i, args)
 		ok := ck.servers[i].Call("KVServer.Get", &args, &reply)
@@ -99,9 +96,6 @@ func (ck *Clerk) PutAppend(key string, value string, op string) {
 	ck.nextCmdId++
 	args := PutAppendArgs{Key: key, Value: value, Op: op, CmdId: cmdId, ClientId: ck.clientId}
 	for i := ck.lastLeaderId; ; i = (i + 1) % len(ck.servers) {
-		// if i == len(ck.servers)-1 {
-		// 	time.Sleep(50 * time.Millisecond)
-		// }
 		reply := PutAppendReply{}
 		DPrintf("client %v call put or append to server with args %v\n", ck.clientId, args)
 		ok := ck.servers[i].Call("KVServer.PutAppend", &args, &reply)

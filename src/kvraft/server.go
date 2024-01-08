@@ -38,11 +38,6 @@ type Op struct {
 	Op       string
 }
 
-type RPCResult struct {
-	Err   Err
-	Value string
-}
-
 const (
 	op_put    = "Put"
 	op_get    = "Get"
@@ -255,7 +250,7 @@ func StartKVServer(servers []*labrpc.ClientEnd, me int, persister *raft.Persiste
 
 	// You may need initialization code here.
 
-	kv.applyCh = make(chan raft.ApplyMsg, 1)
+	kv.applyCh = make(chan raft.ApplyMsg)
 	kv.rf = raft.Make(servers, me, persister, kv.applyCh)
 
 	kv.persister = persister
