@@ -101,7 +101,7 @@ def print_results(results: Dict[str, Dict[str, StatsMeter]], timing=False):
 
 
 def run_test(test: str, race: bool, timing: bool):
-    test_cmd = ["go", "test", "-timeout=3m",f"-run={test}",]
+    test_cmd = ["go", "test", "-timeout=1m",f"-run={test}",]
     if race:
         test_cmd.append("-race")
     if timing:
@@ -122,24 +122,23 @@ def last_line(file: str) -> str:
         line = f.readline().decode()
     return line
 
-'''['TestStaticShards','TestJoinLeave','''
 # fmt: off
 def run_tests(
     tests: List[str] =
                         [
-                         'TestStaticShards',
-                         'TestJoinLeave',
-                        'TestSnapshot',
-                         'TestMissChange',
-                        'TestConcurrent1',
-                        'TestConcurrent2',
-                        'TestConcurrent3',
-                         'TestUnreliable1',
-                         'TestUnreliable2',
-                         'TestUnreliable3',
-                         'TestChallenge1Delete',
-                        #  'TestChallenge2Unaffected',
-                         'TestChallenge2Partial'
+                        #  'TestStaticShards',
+                        #  'TestJoinLeave',
+                        # 'TestSnapshot',
+                        #   'TestMissChange',
+                        # 'TestConcurrent1',
+                        # 'TestConcurrent2',
+                        #   'TestConcurrent3',
+                        #  'TestUnreliable1',
+                        #  'TestUnreliable2',
+                        #  'TestUnreliable3',
+                        #  'TestChallenge1Delete',
+                        'TestChallenge2Unaffected',
+                        #  'TestChallenge2Partial'
                         ],
     sequential: bool       = typer.Option(False,  '--sequential',      '-s',    help='Run all test of each group in order'),
     workers: int           = typer.Option(1,      '--workers',         '-p',    help='Number of parallel tasks'),

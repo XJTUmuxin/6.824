@@ -22,7 +22,7 @@ func DPrintf(format string, a ...interface{}) (n int, err error) {
 }
 
 const (
-	RPCTimeOut = 500
+	RPCTimeOut = 150
 )
 
 type ShardCtrler struct {
@@ -73,9 +73,6 @@ const (
 
 func (sc *ShardCtrler) Join(args *JoinArgs, reply *JoinReply) {
 	// Your code here.
-	if Debug {
-		DPrintf("sc server %d accept join cmd with arg %v", sc.me, args)
-	}
 	newOp := Op{Op: op_join, ClientId: args.ClientId, CmdId: args.CmdId, Servers: args.Servers}
 	err := sc.startOp(&newOp)
 	reply.Err = err
@@ -84,9 +81,6 @@ func (sc *ShardCtrler) Join(args *JoinArgs, reply *JoinReply) {
 
 func (sc *ShardCtrler) Leave(args *LeaveArgs, reply *LeaveReply) {
 	// Your code here.
-	if Debug {
-		DPrintf("sc server %d accept leave cmd with arg %v", sc.me, args)
-	}
 	newOp := Op{Op: op_leave, ClientId: args.ClientId, CmdId: args.CmdId, GIDs: args.GIDs}
 	err := sc.startOp(&newOp)
 	reply.Err = err
@@ -95,9 +89,6 @@ func (sc *ShardCtrler) Leave(args *LeaveArgs, reply *LeaveReply) {
 
 func (sc *ShardCtrler) Move(args *MoveArgs, reply *MoveReply) {
 	// Your code here.
-	if Debug {
-		DPrintf("sc server %d accept move cmd with arg %v", sc.me, args)
-	}
 	newOp := Op{Op: op_move, ClientId: args.ClientId, CmdId: args.CmdId, Shard: args.Shard, GID: args.GID}
 	err := sc.startOp(&newOp)
 	reply.Err = err
@@ -106,9 +97,6 @@ func (sc *ShardCtrler) Move(args *MoveArgs, reply *MoveReply) {
 
 func (sc *ShardCtrler) Query(args *QueryArgs, reply *QueryReply) {
 	// Your code here.
-	if Debug {
-		DPrintf("sc server %d accept query cmd with arg %v", sc.me, args)
-	}
 	newOp := Op{Op: op_query, ClientId: args.ClientId, CmdId: args.CmdId, Num: args.Num}
 	err := sc.startOp(&newOp)
 	reply.Err = err
@@ -131,6 +119,7 @@ func (sc *ShardCtrler) startOp(op *Op) Err {
 		err = ErrWrongLeader
 	} else {
 		sc.mu.Lock()
+		DPrintf("sc server %d start op %v", sc.me, *op)
 		if _, ok := sc.notifyChs[index]; !ok {
 			sc.notifyChs[index] = make(chan CmdIdentify, 1)
 		}
@@ -144,6 +133,7 @@ func (sc *ShardCtrler) startOp(op *Op) Err {
 				err = ErrWrongLeader
 			}
 		case <-time.After(time.Duration(RPCTimeOut) * time.Millisecond):
+			DPrintf("TIME OUT of Op %v", op)
 			sc.mu.Lock()
 			if sc.isRepeateCmd(op.ClientId, op.CmdId) {
 				sc.mu.Unlock()
@@ -166,6 +156,7 @@ func (sc *ShardCtrler) applier() {
 		if newApplyMsg.CommandValid {
 			op := newApplyMsg.Command.(Op)
 			sc.mu.Lock()
+			DPrintf("sc server %d apply op %v", sc.me, op)
 			if sc.isRepeateCmd(op.ClientId, op.CmdId) {
 				sc.mu.Unlock()
 				continue
@@ -195,9 +186,9 @@ func reBalance(newConf *Config, oldShards *[NShards]int) {
 	groupShardsMap := make(map[int][]int)
 	for gid := range newConf.Groups {
 		newGroups = append(newGroups, gid)
-		groupShardsMap[gid] = make([]int, 0)
+		groupShardsMap[gid] = make([]int, 0) // the shards than have been allocated to gid
 	}
-	freeShards := make([]int, 0)
+	freeShards := make([]int, 0) // shards than have not been allocated to group in newConfig
 	for i, gid := range newConf.Shards {
 		if _, ok := groupShardsMap[gid]; ok {
 			groupShardsMap[gid] = append(groupShardsMap[gid], i)
@@ -205,7 +196,7 @@ func reBalance(newConf *Config, oldShards *[NShards]int) {
 			freeShards = append(freeShards, i)
 		}
 	}
-	sort.Ints(newGroups)
+	sort.Ints(newGroups) // sort the group to ensure deterministic(the iteration of newConf.Groups is not deterministic)
 	sort.Slice(newGroups, func(i, j int) bool { return len(groupShardsMap[i]) > len(groupShardsMap[j]) })
 
 	if len(newGroups) == 0 {

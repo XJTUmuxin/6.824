@@ -312,23 +312,11 @@ func (kv *ShardKV) updateConf(newConfig *shardctrler.Config) {
 	}
 }
 
-func (kv *ShardKV) isLeader() {
-	for {
-		_, isLeader := kv.rf.GetState()
-		if isLeader {
-			DPrintf("kv server %d of gid %d is leader", kv.me, kv.gid)
-		}
-		time.Sleep(100 * time.Millisecond)
-	}
-}
-
 func (kv *ShardKV) getNextConf() {
 	for {
 		// DPrintf("kv server %d of gid %d begin getNextConf loop", kv.me, kv.gid)
 		_, isLeader := kv.rf.GetState()
-		DPrintf("kv server %d of gid %d try to acquire lock at getNextConf", kv.me, kv.gid)
 		kv.mu.Lock()
-		DPrintf("kv server %d of gid %d success acquire lock at getNextConf", kv.me, kv.gid)
 		if isLeader {
 			if kv.commitNewConf <= kv.config.Num {
 				newConfigNum := kv.config.Num + 1
@@ -493,7 +481,7 @@ func (kv *ShardKV) PushShard(args *TransferShardArgs, reply *TransferShardReply)
 			} else {
 				err = ErrWrongLeader
 			}
-		case <-time.After(1000 * time.Millisecond):
+		case <-time.After(500 * time.Millisecond):
 			err = ErrTimeOut
 		}
 	}
@@ -664,7 +652,6 @@ func StartServer(servers []*labrpc.ClientEnd, me int, persister *raft.Persister,
 	go kv.getNextConf()
 	go kv.pushAllShards()
 	go kv.checkUpdateFinish()
-	go kv.isLeader()
 
 	return kv
 }

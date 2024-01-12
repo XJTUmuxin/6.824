@@ -7,6 +7,7 @@ package shardctrler
 import (
 	"crypto/rand"
 	"math/big"
+	"time"
 
 	"6.824/labrpc"
 )
@@ -43,19 +44,22 @@ func (ck *Clerk) Query(num int) Config {
 	args.ClientId = ck.clientId
 	args.CmdId = ck.nextCmdId
 	ck.nextCmdId++
-
-	// try each known server.
-	for i := ck.lastLeaderId; ; i = (i + 1) % len(ck.servers) {
-		var reply QueryReply
-		DPrintf("begin query to crtl server %d with args %v", i, args)
-		ok := ck.servers[i].Call("ShardCtrler.Query", args, &reply)
-		if ok && reply.WrongLeader == false {
-			ck.lastLeaderId = i
-			DPrintf("query success to crtl server %d with ok: %v args: %v reply: %v", i, ok, args, reply)
-			return reply.Config
-		} else {
-			DPrintf("query err to crtl server %d with ok: %v args: %v reply: %v", i, ok, args, reply)
+	for {
+		// try each known server.
+		for i := 0; i < len(ck.servers); i++ {
+			// for i := ck.lastLeaderId; i != (ck.lastLeaderId+len(ck.servers)-1)%len(ck.servers); i = (i + 1) % len(ck.servers) {
+			var reply QueryReply
+			DPrintf("begin query to crtl server %d with args %v", i, args)
+			ok := ck.servers[(i+ck.lastLeaderId)%len(ck.servers)].Call("ShardCtrler.Query", args, &reply)
+			if ok && reply.WrongLeader == false {
+				ck.lastLeaderId = (i + ck.lastLeaderId) % len(ck.servers)
+				DPrintf("query success to crtl server %d with ok: %v args: %v reply: %v", (i+ck.lastLeaderId)%len(ck.servers), ok, args, reply)
+				return reply.Config
+			} else {
+				DPrintf("query err to crtl server %d with ok: %v args: %v reply: %v", (i+ck.lastLeaderId)%len(ck.servers), ok, args, reply)
+			}
 		}
+		time.Sleep(100 * time.Millisecond)
 	}
 }
 
@@ -66,15 +70,18 @@ func (ck *Clerk) Join(servers map[int][]string) {
 	args.ClientId = ck.clientId
 	args.CmdId = ck.nextCmdId
 	ck.nextCmdId++
-
-	// try each known server.
-	for i := ck.lastLeaderId; ; i = (i + 1) % len(ck.servers) {
-		var reply JoinReply
-		ok := ck.servers[i].Call("ShardCtrler.Join", args, &reply)
-		if ok && reply.WrongLeader == false {
-			ck.lastLeaderId = i
-			return
+	for {
+		// try each known server.
+		for i := 0; i < len(ck.servers); i++ {
+			//for i := ck.lastLeaderId; i != (ck.lastLeaderId+len(ck.servers)-1)%len(ck.servers); i = (i + 1) % len(ck.servers) {
+			var reply JoinReply
+			ok := ck.servers[(i+ck.lastLeaderId)%len(ck.servers)].Call("ShardCtrler.Join", args, &reply)
+			if ok && reply.WrongLeader == false {
+				ck.lastLeaderId = (i + ck.lastLeaderId) % len(ck.servers)
+				return
+			}
 		}
+		time.Sleep(100 * time.Millisecond)
 	}
 }
 
@@ -85,15 +92,18 @@ func (ck *Clerk) Leave(gids []int) {
 	args.ClientId = ck.clientId
 	args.CmdId = ck.nextCmdId
 	ck.nextCmdId++
-
-	// try each known server.
-	for i := ck.lastLeaderId; ; i = (i + 1) % len(ck.servers) {
-		var reply LeaveReply
-		ok := ck.servers[i].Call("ShardCtrler.Leave", args, &reply)
-		if ok && reply.WrongLeader == false {
-			ck.lastLeaderId = i
-			return
+	for {
+		// try each known server.
+		for i := 0; i < len(ck.servers); i++ {
+			// /for i := ck.lastLeaderId; i != (ck.lastLeaderId+len(ck.servers)-1)%len(ck.servers); i = (i + 1) % len(ck.servers) {
+			var reply LeaveReply
+			ok := ck.servers[(i+ck.lastLeaderId)%len(ck.servers)].Call("ShardCtrler.Leave", args, &reply)
+			if ok && reply.WrongLeader == false {
+				ck.lastLeaderId = (i + ck.lastLeaderId) % len(ck.servers)
+				return
+			}
 		}
+		time.Sleep(100 * time.Millisecond)
 	}
 }
 
@@ -105,14 +115,17 @@ func (ck *Clerk) Move(shard int, gid int) {
 	args.ClientId = ck.clientId
 	args.CmdId = ck.nextCmdId
 	ck.nextCmdId++
-
-	// try each known server.
-	for i := ck.lastLeaderId; ; i = (i + 1) % len(ck.servers) {
-		var reply MoveReply
-		ok := ck.servers[i].Call("ShardCtrler.Move", args, &reply)
-		if ok && reply.WrongLeader == false {
-			ck.lastLeaderId = i
-			return
+	for {
+		// try each known server.
+		for i := 0; i < len(ck.servers); i++ {
+			// for i := ck.lastLeaderId; i != (ck.lastLeaderId+len(ck.servers)-1)%len(ck.servers); i = (i + 1) % len(ck.servers) {
+			var reply MoveReply
+			ok := ck.servers[(i+ck.lastLeaderId)%len(ck.servers)].Call("ShardCtrler.Move", args, &reply)
+			if ok && reply.WrongLeader == false {
+				ck.lastLeaderId = (i + ck.lastLeaderId) % len(ck.servers)
+				return
+			}
 		}
+		time.Sleep(100 * time.Millisecond)
 	}
 }

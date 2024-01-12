@@ -56,8 +56,8 @@ type ApplyMsg struct {
 
 const (
 	heartBeatTimeOut     = time.Millisecond * 100
-	electionBaseTimeOut  = 400
-	electionTimeOutRange = 600
+	electionBaseTimeOut  = 700
+	electionTimeOutRange = 300
 )
 
 //
@@ -501,6 +501,7 @@ func (rf *Raft) paralRequestVote(server int, args *RequestVoteArgs) {
 						rf.matchIndex[i] = 0
 					}
 					DPrintf("raft server %d become the leader at term %d\n", args.CandidateId, args.Term)
+					fmt.Printf("raft server %d become the leader at term %d\n", args.CandidateId, args.Term)
 				}
 			}
 		} else {
