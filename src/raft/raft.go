@@ -501,7 +501,6 @@ func (rf *Raft) paralRequestVote(server int, args *RequestVoteArgs) {
 						rf.matchIndex[i] = 0
 					}
 					DPrintf("raft server %d become the leader at term %d\n", args.CandidateId, args.Term)
-					fmt.Printf("raft server %d become the leader at term %d\n", args.CandidateId, args.Term)
 				}
 			}
 		} else {
@@ -678,14 +677,13 @@ func (rf *Raft) killed() bool {
 func (rf *Raft) ticker() {
 	// make the ticker goroutines of every raft server start at a random time
 	rand.Seed(time.Now().UnixNano())
-	randomNumber := rand.Intn(100)
+	randomNumber := rand.Intn(10)
 	time.Sleep(time.Duration(randomNumber) * time.Millisecond)
 
 	for rf.killed() == false {
 
 		// Your code here to check if a leader election should
 		// be started and to randomize sleeping time using
-		time.Sleep(heartBeatTimeOut)
 		rf.mu.Lock()
 		if time.Now().After(rf.electionTime) {
 			// election timeout
@@ -715,6 +713,7 @@ func (rf *Raft) ticker() {
 			}
 		}
 		rf.mu.Unlock()
+		time.Sleep(10 * time.Millisecond)
 	}
 }
 func (rf *Raft) sendHeartBeat() {

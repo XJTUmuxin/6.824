@@ -125,7 +125,7 @@ def last_line(file: str) -> str:
 
 # fmt: off
 def run_tests(
-    tests: List[str],
+    tests: List[str] = ['2A','2B','2C','2D'],
     sequential: bool       = typer.Option(False,  '--sequential',      '-s',    help='Run all test of each group in order'),
     workers: int           = typer.Option(1,      '--workers',         '-p',    help='Number of parallel tasks'),
     iterations: int        = typer.Option(10,     '--iter',            '-n',    help='Number of iterations to run'),

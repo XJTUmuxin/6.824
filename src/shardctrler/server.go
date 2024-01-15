@@ -133,7 +133,6 @@ func (sc *ShardCtrler) startOp(op *Op) Err {
 				err = ErrWrongLeader
 			}
 		case <-time.After(time.Duration(RPCTimeOut) * time.Millisecond):
-			DPrintf("TIME OUT of Op %v", op)
 			sc.mu.Lock()
 			if sc.isRepeateCmd(op.ClientId, op.CmdId) {
 				sc.mu.Unlock()
@@ -186,9 +185,9 @@ func reBalance(newConf *Config, oldShards *[NShards]int) {
 	groupShardsMap := make(map[int][]int)
 	for gid := range newConf.Groups {
 		newGroups = append(newGroups, gid)
-		groupShardsMap[gid] = make([]int, 0) // the shards than have been allocated to gid
+		groupShardsMap[gid] = make([]int, 0)
 	}
-	freeShards := make([]int, 0) // shards than have not been allocated to group in newConfig
+	freeShards := make([]int, 0)
 	for i, gid := range newConf.Shards {
 		if _, ok := groupShardsMap[gid]; ok {
 			groupShardsMap[gid] = append(groupShardsMap[gid], i)
@@ -196,7 +195,7 @@ func reBalance(newConf *Config, oldShards *[NShards]int) {
 			freeShards = append(freeShards, i)
 		}
 	}
-	sort.Ints(newGroups) // sort the group to ensure deterministic(the iteration of newConf.Groups is not deterministic)
+	sort.Ints(newGroups)
 	sort.Slice(newGroups, func(i, j int) bool { return len(groupShardsMap[i]) > len(groupShardsMap[j]) })
 
 	if len(newGroups) == 0 {

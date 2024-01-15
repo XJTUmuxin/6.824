@@ -67,6 +67,7 @@ AppendEntires RPC的处理逻辑需要严格按照图2的说明，需要给leade
 需要注意的是添加的三个新的成员变量都是需要持久化的，因此当这三个变量修改时需要进行persist，server重启时也需要读取这三个变量。
 
 ### 容易出错的细节
+#### bug1
 
 在2D非常容易出现的一个bug是由于在applyCh进行写入时持有锁引起的一个死锁问题。
 
@@ -86,6 +87,20 @@ Raft -> apply() -> **lock()** -> (newLog 写入 applyCh)(阻塞)
 那么为什么之前不会死锁呢，因为之前raft提交的新命令都会很快被上层服务读取，因此applyCh的写入不会阻塞，因此不会死锁。
 
 解决办法很简单，就是在对applyCh进行写入时暂时放弃掉锁，在写入完成后再重新获取锁，这样就不会产生死锁。
+#### bug2
+bug2是由于log快速回退机制和InstallSnapshot handler的处理逻辑不完善导致的。
+当follower的log和leader的log不一致时，需要对follower的log进行回退，最简单的做法是对leader中的nextIndex[follower]--。但是当follower中出现大量错误log时，这种线性的回退速度会很慢，因此需要进行一些优化来加速回退。
+
+[student guide](https://thesquareplanet.com/blog/students-guide-to-raft/)中其实提到了一种优化方案，但是在我一开始的实现中并未使用该方案，而是简单的使用nextIndex[follower]/=2这样的方法来加速log回退，在未引入快照机制时，这种方法其实也能有效的加快log回退并且没有引入别的问题，但是加入快照机制后，产生了致命的bug。
+
+在线性回退时，nextIndex[follower]在逐一递减，因此是不会减少到小于等于leader的lastIncludeIndex的，但是在nextIndex[follower]/=2这样的回退方式下，nextIndex的值是很容易被减少到小于lastIncludeIndex的，此时，leader的logs中已经没有该index下的log，因此，会向follower直接调用InstallSnapshot RPC，发送最新快照，而leader发送的快照的LastIncludeIndex和follower的LastIncludeIndex是有可能相等的（在应用层创建快照较频繁时这种情况是非常常见的）。
+
+在InstallSnapshot handler中，处理逻辑是：当发送过来的Snapshot对应的LastIncludeIndex和LastIncludeTerm和logs中的某个log符合时，不做任何处理，其余情况下清空所有logs，应用快照。上一段描述的那种情况就被归类到其他情况了，因此follower会清空所有logs，并应用快照，这样会导致灾难性的后果，因为会有正确的并且已经达成共识的log被丢弃掉，如果此时的leader失去leader身份，恰好该follower当选leader，那么那些log会在所有raft server间被永久丢弃！
+
+解决办法其实很简单，在InstallSnapshot handler中添加一个处理逻辑，当leader发送过来的Snapshot对应的LastIncludeIndex和follower中的LastIncludeIndex一致时，不做任何处理，直接返回。
+
+该bug其实是在lab3的测试中发现的，在应用层创建快照频繁时，该bug出现的概率会非常大。
+
 ## Test
 
 ### 单次测试

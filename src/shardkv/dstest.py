@@ -126,19 +126,19 @@ def last_line(file: str) -> str:
 def run_tests(
     tests: List[str] =
                         [
-                        #  'TestStaticShards',
-                        #  'TestJoinLeave',
-                        # 'TestSnapshot',
-                        #   'TestMissChange',
-                        # 'TestConcurrent1',
-                        # 'TestConcurrent2',
-                        #   'TestConcurrent3',
-                        #  'TestUnreliable1',
-                        #  'TestUnreliable2',
-                        #  'TestUnreliable3',
-                        #  'TestChallenge1Delete',
+                         'TestStaticShards',
+                         'TestJoinLeave',
+                        'TestSnapshot',
+                          'TestMissChange',
+                        'TestConcurrent1',
+                        'TestConcurrent2',
+                          'TestConcurrent3',
+                         'TestUnreliable1',
+                         'TestUnreliable2',
+                         'TestUnreliable3',
+                         'TestChallenge1Delete',
                         'TestChallenge2Unaffected',
-                        #  'TestChallenge2Partial'
+                          'TestChallenge2Partial'
                         ],
     sequential: bool       = typer.Option(False,  '--sequential',      '-s',    help='Run all test of each group in order'),
     workers: int           = typer.Option(1,      '--workers',         '-p',    help='Number of parallel tasks'),
